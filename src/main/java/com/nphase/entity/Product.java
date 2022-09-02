@@ -1,16 +1,20 @@
 package com.nphase.entity;
 
+import com.nphase.entity.enums.Category;
+
 import java.math.BigDecimal;
 
 public class Product {
     private final String name;
     private final BigDecimal pricePerUnit;
     private final int quantity;
+    private final Category category;
 
-    public Product(String name, BigDecimal pricePerUnit, int quantity) {
+    public Product(String name, BigDecimal pricePerUnit, int quantity, Category category) {
         this.name = name;
         this.pricePerUnit = pricePerUnit;
         this.quantity = quantity;
+        this.category = category;
     }
 
     public String getName() {
@@ -23,5 +27,9 @@ public class Product {
 
     public int getQuantity() {
         return quantity;
+    }
+
+    public Category getCategory() {
+        return category;
     }
 }

@@ -5,8 +5,14 @@ import com.nphase.entity.ShoppingCart;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.toList;
 
 public class ShoppingCartService {
+
     public static final int SCALE = 2;
     private static final int QUANTITY_TO_DISCOUNT = 3;
     private static final BigDecimal REGULAR_COEFFICIENT = BigDecimal.ONE;
@@ -15,16 +21,22 @@ public class ShoppingCartService {
     public BigDecimal calculateTotalPrice(ShoppingCart shoppingCart) {
         return shoppingCart.getProducts()
                 .stream()
-                .map(product -> product.getPricePerUnit()
-                        .multiply(calculateDiscount(product))
-                        .multiply(BigDecimal.valueOf(product.getQuantity()))
-                )
+                .collect(Collectors.groupingBy(Product::getCategory, toList()))
+                .values().parallelStream()
+                .flatMap((categorizedProducts) -> categorizedProducts.stream().map(product -> product.getPricePerUnit()
+                                .multiply(calculateDiscount(getTotalQuantity(categorizedProducts)))
+                                .multiply(BigDecimal.valueOf(product.getQuantity()))
+                        ))
                 .reduce(BigDecimal::add)
                 .orElse(BigDecimal.ZERO)
                 .setScale(SCALE, RoundingMode.HALF_UP);
     }
 
-    public BigDecimal calculateDiscount(Product product) {
-        return product.getQuantity() > QUANTITY_TO_DISCOUNT ? REGULAR_COEFFICIENT.subtract(DISCOUNT) : REGULAR_COEFFICIENT;
+    private int getTotalQuantity(List<Product> products) {
+        return products.stream().mapToInt(Product::getQuantity).sum();
+    }
+
+    public BigDecimal calculateDiscount(int quantity) {
+        return quantity > QUANTITY_TO_DISCOUNT ? REGULAR_COEFFICIENT.subtract(DISCOUNT) : REGULAR_COEFFICIENT;
     }
 }
